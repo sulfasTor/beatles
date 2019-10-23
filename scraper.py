@@ -7,65 +7,29 @@ The dump has the format:
     <title m>\t<writers>\t<line 1>\\<line 2>\\...\\<line n>\n
 """
 
-import bs4
 import re
 import requests
-
-BASE_URL = ' http://www.toti.eu.com/beatles/'
-TAGS_TO_FILTER = ('style', 'script', '[document]', 'head', 'title')
-SONG_MATCHER = 'showsong\.asp\?id\=[0-9]+'
-MATCHERS = (
-        'Visit also:', 
-        'www', 
-        '#BeginLibraryItem', 
-        '#EndLibraryItem',
-        'The Beatles Lyrics Repository',
-        'Main page')
-
-def include(element):
-    if element.parent.name in TAGS_TO_FILTER:
-        return False
-    element = element.lstrip()
-    if not element:
-        return False
-    for matcher in MATCHERS:
-        if element.startswith(matcher):
-            return False
-    return True
-
-def process(element):
-    # TODO(eugenhotaj): Handle very rare cases where python does not strip
-    # carrige return correctly. Currenly I'm just doing a manual delete in vim.
-    element = element.strip()
-    # Replace weird appostrophes and quotations.
-    element.replace('’', '\'')
-    element.replace('`', '\'')
-    element.replace('“','"')
-    element.replace('”','"')
-    return element
-
-def scrape_song(url):
-    resp = requests.get(url)
-    soup = bs4.BeautifulSoup(resp.text, features='lxml')
-    elements = soup.findAll(text=True)
-    elements = [element for element in elements if include(element)]
-    elements = [process(element) for element in elements]
-    title, writer = elements[:2]
-    lines= elements[2:]
-    return title, writer, lines
+import random
+from bs4 import BeautifulSoup
 
 if __name__ == "__main__":
-    resp = requests.get(BASE_URL + 'showall.asp')
-    song_urls = re.findall(SONG_MATCHER, resp.text)
-    database = []
-    for i, song_url in enumerate(song_urls):
-        title, writer, lines = scrape_song(BASE_URL + song_url)
-        database.append((title, writer, lines))
-        if i % 10 == 0:
-            print("Scraped %d files; %d remaining." % (i, len(song_urls) - i))
+    with open('calaveritas_links.txt', 'r') as file_:
+        links = file_.readlines()
 
+    calaveritas = []
+    for link in links:
+        link = f"https://{link.strip()}"
+        html = requests.get(link).text
+        soup = BeautifulSoup(html, 'html.parser')
+        calaverita = soup.find("div", {"class" : "entry-content"})
+        if calaverita is not None:
+            lines = calaverita.get_text().replace("(adsbygoogle = window.adsbygoogle || []).push({});", "").split('\n')
+            text = "\\".join([line for line in lines if line.strip()])
+            print(text)
+            calaveritas.append(text)
 
-    with open('dataset.txt', 'w') as file_:
-        for title, writer, lines in database:
-            line = "{}\t{}\t{}\n".format(title, writer, "\\".join(lines))
-            file_.write(line)
+    random.shuffle(calaveritas)
+    with open('calaveritas_dataset.txt', 'w') as file_:
+        for i, calaverita in enumerate(calaveritas):
+            file_.write(f'{i}\taba\t{calaverita}\n')
+    
