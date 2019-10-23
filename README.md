@@ -21,3 +21,16 @@ una pagina de internet.
     ./scrapper.sh <nombre-del-tipo-de-calaverita> >> calaverita_links.txt
     python scraper.py
 
+
+## Ejemplo
+
+<div class="org-center">
+Estaba analizando la que su alma y ahoro que no pudo ir para todos los miró 
+Solo ella no me despido 
+Se preparó. 
+jugando 
+Estaba Ana Paula 
+Pero en la profe Adán explicaba. 
+En las greñitas.
+</div>
+
